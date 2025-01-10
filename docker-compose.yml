@@ -1,0 +1,9 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    entrypoint: python3 demo.py
+    volumes:
+      - ./app:/app:ro
+    env_file:
+      - .env
