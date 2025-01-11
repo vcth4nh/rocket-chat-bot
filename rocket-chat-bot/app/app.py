@@ -1,17 +1,19 @@
 import asyncio
 import random
 import os
-from better_rocketchat_async import BetterRocketChat 
-from pprint import pprint
-import asyncio
-import random
+from better_rocketchat_async import BetterRocketChat
+from rocketchat_API.rocketchat import RocketChat
 from AIClient import AIClient
+from logs_util import ElasticsearchUtils
+import json
+from pprint import pprint
 
 class Bot:
-    def __init__(self, rc: BetterRocketChat, ai_client: AIClient, stream_speed=1):
+    def __init__(self, rc: BetterRocketChat, ai_client: AIClient, stream_speed=1, es_utils: ElasticsearchUtils=None):
         self.rc = rc
         self.ai_client : AIClient = ai_client
         self.stream_speed = int(stream_speed)*5
+        self.elasticsearch = es_utils
 
     async def ai_chat(self, msg, channel_id):
         await self.rc.send_typing_event(channel_id)       
@@ -49,8 +51,10 @@ class Bot:
 
     async def handle_message(self, channel_id, sender_id, msg_id, thread_id, msg, qualifier, unread, repeated):
         if sender_id != self.rc.user_id:
+            self.elasticsearch.log_message_wrapper(msg, sender_id, msg_id)
             await self.ai_chat_stream(msg, channel_id)
 
+    # TODO: should handle DM and group messages differently
     def subscribe_callback(self, *args):
         asyncio.create_task(self.handle_message(*args))
 
@@ -64,21 +68,29 @@ class Bot:
 
 
 async def main():
-    address=f"wss://{os.getenv('ROCKETCHAT_DOMAIN','localhost')}:{os.getenv('ROCKETCHAT_PORT',3000)}/websocket"
+    address=f"wss://{os.getenv('ROCKETCHAT_ADDR','localhost:3000')}/websocket"
     print(f'Connecting to {address}...')
     username=os.getenv('ROCKETCHAT_USER')
     password=os.getenv('ROCKETCHAT_PASSWORD')
     stream_speed = os.getenv('STREAM_SPEED', 1)
+
     ai_client = AIClient(
         url=os.getenv('OPENAI_URL'),
         api_key=os.getenv('OPENAI_API_KEY'),
         model=os.getenv('OPENAI_MODEL')
     )
+
+    es_host = f"{os.getenv('ELASTICSEARCH_URL','http://localhost:9200')}"
+    es_utils = ElasticsearchUtils(
+        host=es_host,
+        base_index_name="log_messages",
+    )
+
     while True:
         try:
             rc = BetterRocketChat()
             await rc.start(address, username, password)
-            bot = Bot(rc, ai_client, stream_speed)
+            bot = Bot(rc, ai_client, stream_speed, es_utils)
             await bot.run()
         except (BetterRocketChat.ConnectionClosed,
                 BetterRocketChat.ConnectCallFailed) as e:
