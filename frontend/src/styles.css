@@ -1,0 +1,95 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f4f4f4;
+}
+
+.app-container {
+  text-align: center;
+  width: 100%;
+  max-width: 800px; /* Increased width for larger form */
+}
+
+.home-page {
+  background: #fff;
+  padding: 40px; /* Larger padding for more space */
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Enhanced shadow for emphasis */
+}
+
+.home-page h2 {
+  font-size: 2rem; /* Larger font for title */
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 25px; /* More spacing between form elements */
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 1.2rem; /* Larger font for labels */
+  display: block;
+  margin-bottom: 10px;
+}
+
+.form-group input {
+  width: 100%; /* Full width for inputs */
+  padding: 12px; /* Larger padding for inputs */
+  font-size: 1.1rem; /* Bigger text size for inputs */
+  border: 1px solid #ccc;
+  border-radius: 8px; /* Slightly rounded corners */
+}
+
+button {
+  width: 100%; /* Full-width button */
+  padding: 15px; /* Larger padding for button */
+  font-size: 1.2rem; /* Bigger text size for button */
+  font-weight: bold;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px; /* Rounded corners for button */
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.tag {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 15px; /* Increased size for tags */
+  border-radius: 15px;
+  margin-right: 10px; /* More spacing between tags */
+  margin-bottom: 10px;
+  font-size: 1rem; /* Larger font for tags */
+  display: flex;
+  align-items: center;
+}
+
+.remove-tag {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.remove-tag:hover {
+  color: #ff4d4d;
+}
