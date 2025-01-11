@@ -1,181 +1,339 @@
-import React, { useState } from 'react';
-import FormInput from '../components/FormInput';
-import OptionCheckbox from '../components/OptionCheckbox';
-import { createPolicy, deletePolicy } from '../services/policyService'; // Import services
+import React, { useState } from "react";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Paper,
+  IconButton,
+  Switch,
+  FormControlLabel,
+} from "@mui/material";
+
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
 const HomePage = () => {
-  const [blacklist, setBlacklist] = useState([]);
-  const [regexList, setRegexList] = useState([]);
-  const [wordLimit, setWordLimit] = useState(0);
-  const [detectSecrets, setDetectSecrets] = useState(true);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [blacklist, setBlacklist] = useState([
+    "example",
+    "test",
+    "thieunang",
+    "ngoitrongtoiletgao",
+    "momo",
+    "suyvl",
+    "nhoem",
+    "d ae",
+    "vctdan",
+  ]);
+  const [regexList, setRegexList] = useState([
+    "^\\d+$",
+    "^((25[0-5]|2[0-4][0-9]|[1-9][0-9])(\\.(?!$)|$)){4}$",
+  ]);
+  const [newWords, setNewWords] = useState("");
+  const [newRegex, setNewRegex] = useState("");
+  const [editingRegex, setEditingRegex] = useState(null);
+  const [editingBlacklist, setEditingBlacklist] = useState(null);
+  const [detectSecrets, setDetectSecrets] = useState(false);
+  const [wordLimit, setWordLimit] = useState(100);
 
-  // Add a word to the blacklist tags and call the createPolicy API
-  const handleBlacklistInput = async (e) => {
-    if (e.key === 'Enter' && e.target.value.trim() !== '') {
-      e.preventDefault();
-      const newWord = e.target.value.trim();
+  const handleBlacklistChange = () => {
+    const words = newWords.split(",").map((word) => word.trim());
+    setBlacklist([...blacklist, ...words]);
+    setNewWords("");
+  };
 
-      try {
-        const createdPolicy = await createPolicy({
-          type: 'blacklist',
-          value: newWord,
-        });
-        setBlacklist([...blacklist, { id: createdPolicy.id, value: newWord }]);
-        setSuccessMessage(`Blacklist word "${newWord}" added successfully!`);
-        e.target.value = '';
-      } catch (err) {
-        setError('Failed to add blacklist word.');
-        console.error(err);
-      }
+  const handleRegexChange = () => {
+    const regexLines = newRegex
+      .split("\n")
+      .map((regex) => regex.trim())
+      .filter(Boolean);
+    setRegexList([...regexList, ...regexLines]);
+    setNewRegex("");
+  };
+
+  const handleEditRegex = (id) => {
+    const regexToEdit = regexList[id - 1];
+    setEditingRegex({ id, value: regexToEdit });
+  };
+
+  const handleEditBlacklist = (id) => {
+    const blacklistToEdit = blacklist[id - 1];
+    setEditingBlacklist({ id, value: blacklistToEdit });
+  };
+
+  const handleSaveEditRegex = () => {
+    if (editingRegex) {
+      const updatedRegexList = regexList.map((regex, index) =>
+        index === editingRegex.id - 1 ? editingRegex.value : regex
+      );
+      setRegexList(updatedRegexList);
+      setEditingRegex(null);
     }
   };
 
-  // Add a regex to the regexList tags and call the createPolicy API
-  const handleRegexInput = async (e) => {
-    if (e.key === 'Enter' && e.target.value.trim() !== '') {
-      e.preventDefault();
-      const newRegex = e.target.value.trim();
-
-      try {
-        const createdPolicy = await createPolicy({
-          type: 'regex',
-          value: newRegex,
-        });
-        setRegexList([...regexList, { id: createdPolicy.id, value: newRegex }]);
-        setSuccessMessage(`Regex "${newRegex}" added successfully!`);
-        e.target.value = '';
-      } catch (err) {
-        setError('Failed to add regex.');
-        console.error(err);
-      }
+  const handleSaveEditBlacklist = () => {
+    if (editingBlacklist) {
+      const updatedBlacklistList = blacklist.map((blacklist, index) =>
+        index === editingBlacklist.id - 1 ? editingBlacklist.value : blacklist
+      );
+      setBlacklist(updatedBlacklistList);
+      setEditingBlacklist(null);
     }
   };
 
-  // Call the createPolicy API for word limit when form is submitted
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      await createPolicy({
-        type: 'wordLimit',
-        value: wordLimit.toString(),
-      });
-
-      setSuccessMessage('Word limit policy created successfully!');
-      setError('');
-    } catch (err) {
-      setError('Failed to create word limit policy.');
-      console.error(err);
-    }
+  const handleSaveToggleAndLimit = () => {
+    console.log("Detect Secrets:", detectSecrets);
+    console.log("Word Limit:", wordLimit);
   };
 
-  // Remove a tag from the blacklist and call the deletePolicy API
-  const removeBlacklistTag = async (index) => {
-    const tag = blacklist[index];
-    try {
-      await deletePolicy(tag.id); // Call delete API
-      setBlacklist(blacklist.filter((_, i) => i !== index));
-      setSuccessMessage(`Blacklist word "${tag.value}" removed successfully!`);
-    } catch (err) {
-      setError('Failed to remove blacklist word.');
-      console.error(err);
-    }
-  };
+  const blacklistColumns = [
+    { field: "id", headerName: "Index", width: 100 },
+    { field: "word", headerName: "Word", flex: 1 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 150,
+      renderCell: (params) => (
+        <Box>
+          <IconButton
+            color="primary"
+            onClick={() => handleEditBlacklist(params.row.id)}
+          >
+            <EditIcon />
+          </IconButton>
+          <IconButton
+            color="error"
+            onClick={() =>
+              setBlacklist(blacklist.filter((_, i) => i !== params.row.id - 1))
+            }
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
 
-  // Remove a tag from the regexList and call the deletePolicy API
-  const removeRegexTag = async (index) => {
-    const tag = regexList[index];
-    try {
-      await deletePolicy(tag.id); // Call delete API
-      setRegexList(regexList.filter((_, i) => i !== index));
-      setSuccessMessage(`Regex "${tag.value}" removed successfully!`);
-    } catch (err) {
-      setError('Failed to remove regex.');
-      console.error(err);
-    }
-  };
+  const blacklistRows = blacklist.map((word, index) => ({
+    id: index + 1,
+    word,
+  }));
+
+  const regexColumns = [
+    { field: "id", headerName: "Index", width: 100 },
+    { field: "regex", headerName: "Regex Pattern", flex: 1 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 150,
+      renderCell: (params) => (
+        <Box>
+          <IconButton
+            color="primary"
+            onClick={() => handleEditRegex(params.row.id)}
+          >
+            <EditIcon />
+          </IconButton>
+          <IconButton
+            color="error"
+            onClick={() =>
+              setRegexList(regexList.filter((_, i) => i !== params.row.id - 1))
+            }
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
+
+  const regexRows = regexList.map((regex, index) => ({ id: index + 1, regex }));
 
   return (
-    <div className="home-page">
-      <h2>Web Portal Settings</h2>
-      {error && <p className="error-message">{error}</p>}
-      {successMessage && <p className="success-message">{successMessage}</p>}
+    <Box
+      sx={{
+        p: 4,
+        maxWidth: "1200px",
+        margin: "0 auto",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+      }}
+    >
+      <Typography variant="h4" color="primary" gutterBottom>
+        Configure Policies
+      </Typography>
 
-      <form onSubmit={handleSubmit}>
-        {/* Blacklist Words */}
-        <div className="form-group">
-          <label htmlFor="blacklist">Blacklist Words (Press Enter to Add):</label>
-          <input
-            id="blacklist"
-            type="text"
-            onKeyDown={handleBlacklistInput}
-            placeholder="Type a word and press Enter"
-          />
-          <div className="tags-container">
-            {blacklist.map((tag, index) => (
-              <div key={tag.id} className="tag">
-                {tag.value}
-                <button
-                  type="button"
-                  className="remove-tag"
-                  onClick={() => removeBlacklistTag(index)}
-                >
-                  &times;
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Toggle and Word Limit
+        </Typography>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={6}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={detectSecrets}
+                  onChange={(e) => setDetectSecrets(e.target.checked)}
+                />
+              }
+              label="Detect Secrets"
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Word Limit"
+              type="number"
+              value={wordLimit}
+              onChange={(e) => setWordLimit(e.target.value)}
+            />
+          </Grid>
+        </Grid>
+        <Box sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleSaveToggleAndLimit}
+          >
+            Save Settings
+          </Button>
+        </Box>
+      </Paper>
 
-        {/* Custom Regex */}
-        <div className="form-group">
-          <label htmlFor="regex">Custom Regex (Press Enter to Add):</label>
-          <input
-            id="regex"
-            type="text"
-            onKeyDown={handleRegexInput}
-            placeholder="Type a regex and press Enter"
-          />
-          <div className="tags-container">
-            {regexList.map((regex, index) => (
-              <div key={regex.id} className="tag">
-                {regex.value}
-                <button
-                  type="button"
-                  className="remove-tag"
-                  onClick={() => removeRegexTag(index)}
-                >
-                  &times;
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Blacklisted Words
+        </Typography>
+        {editingBlacklist && (
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              value={editingBlacklist.value}
+              onChange={(e) =>
+                setEditingBlacklist({
+                  ...editingBlacklist,
+                  value: e.target.value,
+                })
+              }
+              placeholder="Thay đổi từ blacklist"
+              sx={{ mb: 1 }}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleSaveEditBlacklist}
+            >
+              Save Edit
+            </Button>
+          </Box>
+        )}
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              value={newWords}
+              onChange={(e) => setNewWords(e.target.value)}
+              placeholder="Enter words to blacklist (comma separated)"
+              multiline
+              rows={2}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleBlacklistChange}
+            >
+              Save Changes
+            </Button>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="subtitle1">
+              Current Blacklist ({blacklist.length} words):
+            </Typography>
+            <Box sx={{ height: 400, mt: 2 }}>
+              <DataGrid
+                rows={blacklistRows}
+                columns={blacklistColumns}
+                pageSize={5}
+                rowsPerPageOptions={[5]}
+                disableSelectionOnClick
+                components={{ Toolbar: GridToolbar }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
 
-        {/* Word Limit */}
-        <FormInput
-          id="word-limit"
-          label="Word Count Limit:"
-          type="number"
-          value={wordLimit}
-          onChange={(e) => setWordLimit(Number(e.target.value))}
-          placeholder="Enter a maximum word count"
-        />
-
-        {/* Detect Secrets */}
-        <OptionCheckbox
-          id="detect-secrets"
-          label="Detect Secrets (default enabled)"
-          checked={detectSecrets}
-          onChange={(e) => setDetectSecrets(e.target.checked)}
-        />
-
-        {/* Submit */}
-        <button type="submit">Submit Word Limit</button>
-      </form>
-    </div>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Regex Patterns
+        </Typography>
+        {editingRegex && (
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              value={editingRegex.value}
+              onChange={(e) =>
+                setEditingRegex({ ...editingRegex, value: e.target.value })
+              }
+              placeholder="Edit regex pattern"
+              sx={{ mb: 1 }}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleSaveEditRegex}
+            >
+              Save Edit
+            </Button>
+          </Box>
+        )}
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              value={newRegex}
+              onChange={(e) => setNewRegex(e.target.value)}
+              placeholder="Enter regex patterns (one per line)"
+              multiline
+              rows={4}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleRegexChange}
+            >
+              Save Changes
+            </Button>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="subtitle1">
+              Current Regex Filters ({regexList.length} patterns):
+            </Typography>
+            <Box sx={{ height: 400, mt: 2 }}>
+              <DataGrid
+                rows={regexRows}
+                columns={regexColumns}
+                pageSize={5}
+                rowsPerPageOptions={[5]}
+                disableSelectionOnClick
+                components={{ Toolbar: GridToolbar }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Box>
   );
 };
 

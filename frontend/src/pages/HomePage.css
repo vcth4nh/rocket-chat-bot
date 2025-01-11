@@ -1,0 +1,115 @@
+/* Improved styles for the Home Page */
+.home-page {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+    color: #333;
+  }
+  
+  h1 {
+    color: #ff4c4c;
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 30px;
+    overflow: visible;
+    white-space: nowrap;
+    display: block;
+  }
+  
+  .section {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .header {
+    font-size: 1.4em;
+    margin-bottom: 15px;
+    color: #444;
+    font-weight: bold;
+    border-bottom: 2px solid #ff4c4c;
+    padding-bottom: 5px;
+  }
+  
+  .content {
+    margin-bottom: 20px;
+  }
+  
+  textarea {
+    width: 100%;
+    height: 80px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    background-color: #fff;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+  
+  .actions button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    color: #fff;
+    transition: background-color 0.3s;
+  }
+  
+  .actions button.active {
+    background-color: #ff4c4c;
+  }
+  
+  .actions button:not(.active) {
+    background-color: #444;
+  }
+  
+  .actions button:hover {
+    background-color: #333;
+  }
+  
+  .current-list {
+    margin-top: 10px;
+  }
+  
+  .current-list h3 {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  
+  .list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .item {
+    background-color: #222;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .item button {
+    background: none;
+    color: #ff4c4c;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    padding: 0;
+  }
+  
