@@ -1,6 +1,7 @@
 import json
 import os
 import datetime
+from pprint import pprint
 import uuid
 
 from elasticsearch import Elasticsearch
@@ -76,7 +77,13 @@ class ElasticsearchUtils:
         username = os.getenv('ROCKETCHAT_USER')
         password = os.getenv('ROCKETCHAT_PASSWORD')
         address = f"https://{os.getenv('ROCKETCHAT_ADDR','localhost:3000')}"
-        rc = RocketChat(username, password, address)
+        print(f"Connecting to RocketChat at {address}...")
+        # rocket = RocketChat(username, password, server_url=address)
+        # pprint(rocket.me().json())
+        # pprint(rocket.channels_list().json())
+        # pprint(rocket.chat_post_message('good news everyone!', channel='GENERAL', alias='Farnsworth').json())
+        # pprint(rocket.channels_history('GENERAL', count=5).json())
+        rc = RocketChat(username, password, server_url=address)
         try:
             # Use the RocketChat users.info endpoint to fetch user details
             response = rc.users_info(user_id=user_id)
