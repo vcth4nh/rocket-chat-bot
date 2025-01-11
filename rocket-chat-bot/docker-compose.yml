@@ -2,7 +2,7 @@ services:
   bot:
     build: .
     restart: unless-stopped
-    entrypoint: python3 demo.py
+    entrypoint: python3 app.py
     volumes:
       - ./app:/app:ro
     env_file:
