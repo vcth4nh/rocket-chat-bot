@@ -71,7 +71,7 @@ async def main():
     stream_speed = os.getenv('STREAM_SPEED', 1)
     ai_client = AIClient(
         url=os.getenv('OPENAI_URL'),
-        api_key=os.getenv('OPENAI_API'),
+        api_key=os.getenv('OPENAI_API_KEY'),
         model=os.getenv('OPENAI_MODEL')
     )
     while True:
