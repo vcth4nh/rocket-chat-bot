@@ -7,13 +7,17 @@ from AIClient import AIClient
 from logs_util import ElasticsearchUtils
 import json
 from pprint import pprint
+from policy import PolicyController
+from dotenv import load_dotenv
+load_dotenv()
 
 class Bot:
-    def __init__(self, rc: BetterRocketChat, ai_client: AIClient, stream_speed=1, es_utils: ElasticsearchUtils=None):
+    def __init__(self, rc: BetterRocketChat, ai_client: AIClient, stream_speed=1, es_utils: ElasticsearchUtils=None, policy_controller: PolicyController=None):
         self.rc = rc
         self.ai_client : AIClient = ai_client
         self.stream_speed = int(stream_speed)*5
         self.elasticsearch = es_utils
+        self.policy_controller = policy_controller
 
     async def ai_chat(self, msg, channel_id):
         await self.rc.send_typing_event(channel_id)       
@@ -52,6 +56,9 @@ class Bot:
     async def handle_message(self, channel_id, sender_id, msg_id, thread_id, msg, qualifier, unread, repeated):
         if sender_id != self.rc.user_id:
             self.elasticsearch.log_message_wrapper(msg, sender_id, msg_id)
+            if not self.policy_controller.run(msg):
+                await self.rc.send_message("Message not allowed", channel_id)
+                return
             await self.ai_chat_stream(msg, channel_id)
 
     # TODO: should handle DM and group messages differently
@@ -86,11 +93,14 @@ async def main():
         base_index_name="log_messages",
     )
 
+    mongo_uri = os.getenv('MONGO_URI')
+    policy_controller = PolicyController(mongo_uri)
+
     while True:
         try:
             rc = BetterRocketChat()
             await rc.start(address, username, password)
-            bot = Bot(rc, ai_client, stream_speed, es_utils)
+            bot = Bot(rc, ai_client, stream_speed, es_utils, policy_controller)
             await bot.run()
         except (BetterRocketChat.ConnectionClosed,
                 BetterRocketChat.ConnectCallFailed) as e:

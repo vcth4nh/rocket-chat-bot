@@ -32,7 +32,6 @@ class MongoDB:
             logging.info("MongoDB connection closed.")
 
 
-
 mongo_instance = MongoDB(MONGO_URI, DATABASE_NAME)
 mongo_instance.connect()
 db = mongo_instance.get_database()

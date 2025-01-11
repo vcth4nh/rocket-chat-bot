@@ -2,7 +2,7 @@ from pymongo.collection import Collection
 from bson import ObjectId
 from datetime import datetime
 from fastapi import HTTPException
-from app.models import PolicyRuleSchema
+from app.schemas import PolicyRuleSchema
 
 
 class PolicyController:
@@ -10,9 +10,6 @@ class PolicyController:
 
     @staticmethod
     def create_policy_rule(data: dict, policy_collection: Collection):
-        """
-        Tạo một policy rule mới.
-        """
         schema = PolicyRuleSchema()
         validated_data = schema.load(data)
         validated_data["created_at"] = datetime.utcnow()
@@ -23,9 +20,6 @@ class PolicyController:
 
     @staticmethod
     def get_policy_rule_by_id(policy_id: str, policy_collection: Collection):
-        """
-        Lấy thông tin policy rule theo ID.
-        """
         policy = policy_collection.find_one({"_id": ObjectId(policy_id)})
         if not policy:
             raise HTTPException(status_code=404, detail="Policy rule not found")
@@ -33,9 +27,6 @@ class PolicyController:
 
     @staticmethod
     def get_all_policy_rules(policy_collection: Collection):
-        """
-        Lấy danh sách tất cả policy rules.
-        """
         policies = list(policy_collection.find())
         return PolicyRuleSchema(many=True).dump(policies)
 
