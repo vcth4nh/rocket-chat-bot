@@ -10,10 +10,15 @@ class Repository:
             self.client = MongoClient(db_uri)
             self.database = self.client[db_name]
             self.collection: Collection = self.database[collection_name]
+            print("Connecting to MongoDB...")
+            self.test_connection()
             print(f"Connected to MongoDB collection: {db_name}.{collection_name}")
         except PyMongoError as e:
-            print(f"Error connecting to MongoDB: {e}")
+            print(f"Error connecting to MongoDB:\n{e}")
             raise
+    
+    def test_connection(self):
+        return self.client.server_info()
 
     def insert_one(self, document: Dict[str, Any]) -> str:
         result = self.collection.insert_one(document)

@@ -1,5 +1,4 @@
 import asyncio
-import random
 import os
 from rocketchat_async import RocketChat
 from rocketchat_async.constants import *
@@ -60,21 +59,17 @@ class Bot:
         if sender_id != self.rc.user_id:
             self.elasticsearch.log_message(msg, sender_uname, msg_id)
 
-            # if not self.policy_controller.run(msg):
-            #     # TODO: reply bi vi pham o dau
-            #     await self.rc.send_message("Message not allowed", channel_id)
-            #     return
+            if not self.policy_controller.run(msg):
+                # TODO: reply bi vi pham o dau
+                await self.rc.send_message("Message not allowed", channel_id)
+                return
             
             await self.ai_chat_stream(msg, channel_id)
 
     def subscribe_callback_dm(self, msg: ReceivedMessage):
-        # print("DM")
-        # pprint(msg)
         asyncio.create_task(self.handle_message(msg.rid, msg.u._id, msg.u.username, msg._id, msg.msg))
         
     def subscribe_callback_channel(self, msg: ReceivedMessage):
-        # pprint("Channel")
-        # pprint(msg)
         for mention in msg.mentions:
             if mention._id == self.rc.user_id:
                 asyncio.create_task(self.handle_message(msg.rid, msg.u._id, msg.u.username, msg._id, msg.msg))
@@ -95,22 +90,25 @@ class Bot:
 
 async def main():
     address=f"wss://{os.getenv('ROCKETCHAT_ADDR','localhost:3000')}/websocket"
-    print(f'Connecting to {address}...')
     username=os.getenv('ROCKETCHAT_USER')
     password=os.getenv('ROCKETCHAT_PASSWORD')
     stream_speed = os.getenv('STREAM_SPEED', 1)
 
+    print(f"Connecting to ChatGPT API...")
     ai_client = AIClient(
         url=os.getenv('OPENAI_URL'),
         api_key=os.getenv('OPENAI_API_KEY'),
         model=os.getenv('OPENAI_MODEL')
     )
+    print(f"Connected to ChatGPT API")
 
+    print(f"Connecting to Elasticsearch...")
     es_host = f"{os.getenv('ELASTICSEARCH_URL','http://localhost:9200')}"
     es_utils = ElasticsearchUtils(
         host=es_host,
         base_index_name="log_messages",
     )
+    print(f"Connected to Elasticsearch")
 
     mongo_uri = os.getenv('MONGO_URI')
     policy_controller = PolicyController(mongo_uri)
@@ -118,13 +116,15 @@ async def main():
     while True:
         try:
             rc = RocketChat(verbose=True)
+            print(f'Connecting to {address}...')
             await rc.start(address, username, password)
             bot = Bot(rc, ai_client, stream_speed, es_utils, policy_controller)
             await bot.run()
         except (RocketChat.ConnectionClosed,
                 RocketChat.ConnectCallFailed) as e:
-            print(f'Connection failed: {e}. Waiting a few seconds...')
-            await asyncio.sleep(random.uniform(4, 8))
+            timeout=5
+            print(f'Connection failed: {e}. Waiting 5 seconds...')
+            await asyncio.sleep(timeout)
             print('Reconnecting...')
 
 asyncio.run(main())

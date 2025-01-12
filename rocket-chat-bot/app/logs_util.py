@@ -5,7 +5,6 @@ from pprint import pprint
 import uuid
 
 from elasticsearch import Elasticsearch
-from rocketchat_API.rocketchat import RocketChat
 
 class ElasticsearchUtils:
     def __init__(self, host="http://localhost:9200", username="", password="", base_index_name="log_messages"):
@@ -72,29 +71,24 @@ class ElasticsearchUtils:
         response = self.es.search(index=index_pattern, body=query)
         return response.get("hits", {}).get("hits", [])
 
-    @staticmethod
-    def get_username_from_id(user_id):
-        username = os.getenv('ROCKETCHAT_USER')
-        password = os.getenv('ROCKETCHAT_PASSWORD')
-        address = f"https://{os.getenv('ROCKETCHAT_ADDR','localhost:3000')}"
-        print(f"Connecting to RocketChat at {address}...")
-        # rocket = RocketChat(username, password, server_url=address)
-        # pprint(rocket.me().json())
-        # pprint(rocket.channels_list().json())
-        # pprint(rocket.chat_post_message('good news everyone!', channel='GENERAL', alias='Farnsworth').json())
-        # pprint(rocket.channels_history('GENERAL', count=5).json())
-        rc = RocketChat(username, password, server_url=address)
-        try:
-            # Use the RocketChat users.info endpoint to fetch user details
-            response = rc.users_info(user_id=user_id)
-            users = response.content
-            user_info = json.loads(users)
-            return user_info.get("user", {}).get("username", "unknown")
-        except Exception as e:
-            print(f"Error fetching username for user_id {user_id}: {e}")
-            return 'unknown'
+    # @staticmethod
+    # def get_username_from_id(user_id):
+    #     username = os.getenv('ROCKETCHAT_USER')
+    #     password = os.getenv('ROCKETCHAT_PASSWORD')
+    #     address = f"https://{os.getenv('ROCKETCHAT_ADDR','localhost:3000')}"
+    #     print(f"Connecting to RocketChat at {address}...")
+    #     rc = RocketChat(username, password, server_url=address)
+    #     try:
+    #         # Use the RocketChat users.info endpoint to fetch user details
+    #         response = rc.users_info(user_id=user_id)
+    #         users = response.content
+    #         user_info = json.loads(users)
+    #         return user_info.get("user", {}).get("username", "unknown")
+    #     except Exception as e:
+    #         print(f"Error fetching username for user_id {user_id}: {e}")
+    #         return 'unknown'
 
-    def log_message_wrapper(self, message, sender_id, msg_id):
-        username = self.get_username_from_id(sender_id)
-        self.log_message(message, username, msg_id)
-        return message
+    # def log_message_wrapper(self, message, sender_id, msg_id):
+    #     username = self.get_username_from_id(sender_id)
+    #     self.log_message(message, username, msg_id)
+    #     return message
