@@ -1,18 +1,21 @@
 import asyncio
 import random
 import os
-from better_rocketchat_async import BetterRocketChat
-from rocketchat_API.rocketchat import RocketChat
+from rocketchat_async import RocketChat
+from rocketchat_async.constants import *
+from rocketchat_async.response_dataclass import ReceivedMessage
 from AIClient import AIClient
 from logs_util import ElasticsearchUtils
 import json
 from pprint import pprint
 from policy import PolicyController
+
+# TODO: remove this
 from dotenv import load_dotenv
 load_dotenv()
 
 class Bot:
-    def __init__(self, rc: BetterRocketChat, ai_client: AIClient, stream_speed=1, es_utils: ElasticsearchUtils=None, policy_controller: PolicyController=None):
+    def __init__(self, rc: RocketChat, ai_client: AIClient, stream_speed=1, es_utils: ElasticsearchUtils=None, policy_controller: PolicyController=None):
         self.rc = rc
         self.ai_client : AIClient = ai_client
         self.stream_speed = int(stream_speed)*5
@@ -53,24 +56,40 @@ class Bot:
             await self.rc.update_message(ai_full_resp, sent_msg_id, channel_id)
 
 
-    async def handle_message(self, channel_id, sender_id, msg_id, thread_id, msg, qualifier, unread, repeated):
+    async def handle_message(self, channel_id, sender_id, sender_uname, msg_id, msg):
         if sender_id != self.rc.user_id:
-            self.elasticsearch.log_message_wrapper(msg, sender_id, msg_id)
-            if not self.policy_controller.run(msg):
-                await self.rc.send_message("Message not allowed", channel_id)
-                return
+            self.elasticsearch.log_message(msg, sender_uname, msg_id)
+
+            # if not self.policy_controller.run(msg):
+            #     # TODO: reply bi vi pham o dau
+            #     await self.rc.send_message("Message not allowed", channel_id)
+            #     return
+            
             await self.ai_chat_stream(msg, channel_id)
 
-    # TODO: should handle DM and group messages differently
-    def subscribe_callback(self, *args):
-        asyncio.create_task(self.handle_message(*args))
-
+    def subscribe_callback_dm(self, msg: ReceivedMessage):
+        # print("DM")
+        # pprint(msg)
+        asyncio.create_task(self.handle_message(msg.rid, msg.u._id, msg.u.username, msg._id, msg.msg))
+        
+    def subscribe_callback_channel(self, msg: ReceivedMessage):
+        # pprint("Channel")
+        # pprint(msg)
+        for mention in msg.mentions:
+            if mention._id == self.rc.user_id:
+                asyncio.create_task(self.handle_message(msg.rid, msg.u._id, msg.u.username, msg._id, msg.msg))
+                return
 
     async def run(self):
         print('Connected.')
         print('Bot is running...')
+        
         for channel_id, channel_type in await self.rc.get_channels():
-            await self.rc.subscribe_to_channel_messages(channel_id, self.subscribe_callback)
+            if channel_type == ChannelQualifier.DIRECT_MESSAGE:
+                await self.rc.subscribe_to_channel_messages_parsed(channel_id, self.subscribe_callback_dm)
+            elif channel_type in [ChannelQualifier.PUBLIC_CHANNEL, ChannelQualifier.PRIVATE_CHANNEL]:
+                await self.rc.subscribe_to_channel_messages_parsed(channel_id, self.subscribe_callback_channel)
+                
         await self.rc.run_forever()
 
 
@@ -98,12 +117,12 @@ async def main():
 
     while True:
         try:
-            rc = BetterRocketChat()
+            rc = RocketChat(verbose=True)
             await rc.start(address, username, password)
             bot = Bot(rc, ai_client, stream_speed, es_utils, policy_controller)
             await bot.run()
-        except (BetterRocketChat.ConnectionClosed,
-                BetterRocketChat.ConnectCallFailed) as e:
+        except (RocketChat.ConnectionClosed,
+                RocketChat.ConnectCallFailed) as e:
             print(f'Connection failed: {e}. Waiting a few seconds...')
             await asyncio.sleep(random.uniform(4, 8))
             print('Reconnecting...')

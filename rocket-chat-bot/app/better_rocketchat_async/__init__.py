@@ -1,1 +1,0 @@
-from .BetterRocketChat import BetterRocketChat
