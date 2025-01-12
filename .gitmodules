@@ -1,0 +1,3 @@
+[submodule "rocket-chat-bot/rocketchat-async"]
+	path = rocket-chat-bot/rocketchat-async
+	url = git@github.com:vcth4nh/rocketchat-async.git
