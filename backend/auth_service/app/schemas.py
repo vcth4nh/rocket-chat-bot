@@ -39,8 +39,8 @@ class UserSchema(Schema):
 class PolicyRuleSchema(Schema):
     type = fields.String(
         required=True,
-        validate=lambda t: t in ["regex", "blacklist", "length_limit"],
-        description="Type of the rule (regex, blacklist, length_limit)"
+        validate=lambda t: t in ["regex", "blacklist", "length_limit", "detect_secrets"],
+        description="Type of the rule (regex, blacklist, length_limit, detect_secrets)",
     )
     value = fields.Raw(required=True, description="Value for the policy rule (string or int)")
     created_at = fields.DateTime(dump_only=True)
@@ -52,3 +52,6 @@ class PolicyRuleSchema(Schema):
             raise ValidationError("Value must be an integer for type 'length_limit'")
         if self.context.get("type") in ["regex", "blacklist"] and not isinstance(value, str):
             raise ValidationError("Value must be a string for type 'regex' or 'blacklist'")
+        if self.context.get("type") == "detect_secrets" and not isinstance(value, bool):
+            raise ValidationError("Value must be a boolean for type 'detect_secrets'")
+        

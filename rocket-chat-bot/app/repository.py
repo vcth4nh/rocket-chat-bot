@@ -51,8 +51,25 @@ class PolicyRepository(Repository):
 
     def get_length_limit(self) -> Dict[str, Any]:
         query = {"type": "length_limit"}
-        print(self.find_one(query))
-        return self.find_one(query)
+        res = self.find_one(query)
+        return int(res.get("value")) if res else None
+    
+    def get_detect_secrets(self) -> Dict[str, Any]:
+        query = {"type": "detect_secrets"}
+        res = self.find_one(query)
+        return bool(res.get("value")) if res else None
+    
+    def get_blacklist_words(self) -> List[str]:
+        query = {"type": "blacklist"}
+        res = self.find_many(query)
+        blacklist_words = [item.get("value") for item in res]
+        return blacklist_words
+    
+    def get_regex_patterns(self) -> List[str]:
+        query = {"type": "regex"}
+        res = self.find_many(query)
+        regex_patterns = [item.get("value") for item in res]
+        return regex_patterns
 
     def find_by_policy_type(self, policy_type: str) -> Dict[str, Any]:
         query = {"type": policy_type}
