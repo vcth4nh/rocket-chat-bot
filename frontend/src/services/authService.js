@@ -1,14 +1,15 @@
-import api from './api';
+import api from "./api"; // Ensure this path matches your API instance
 
-// Login service
 export const login = async (username, password) => {
   try {
-    const response = await api.post('/auth/login', null, {
-      params: { username, password },
+    const response = await api.post("/auth/login", {
+      username,
+      password: password,
     });
+
     return response.data;
   } catch (error) {
-    console.error('Login failed:', error.response?.data || error.message);
+    console.error("Login failed:", error.response?.data || error.message);
     throw error;
   }
 };

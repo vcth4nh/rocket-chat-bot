@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -14,100 +14,218 @@ import {
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import {
+  getPoliciesByType,
+  createPolicy,
+  updatePolicy,
+  deletePolicy,
+} from "../services/policyService";
 
 const HomePage = () => {
-  const [blacklist, setBlacklist] = useState([
-    "example",
-    "test",
-    "thieunang",
-    "ngoitrongtoiletgao",
-    "momo",
-    "suyvl",
-    "nhoem",
-    "d ae",
-    "vctdan",
-  ]);
-  const [regexList, setRegexList] = useState([
-    "^\\d+$",
-    "^((25[0-5]|2[0-4][0-9]|[1-9][0-9])(\\.(?!$)|$)){4}$",
-  ]);
+  const [blacklist, setBlacklist] = useState([]);
+  const [regexList, setRegexList] = useState([]);
   const [newWords, setNewWords] = useState("");
   const [newRegex, setNewRegex] = useState("");
   const [editingRegex, setEditingRegex] = useState(null);
   const [editingBlacklist, setEditingBlacklist] = useState(null);
   const [detectSecrets, setDetectSecrets] = useState(false);
-  const [wordLimit, setWordLimit] = useState(100);
+  const [wordLimit, setWordLimit] = useState(0);
 
-  const handleBlacklistChange = () => {
-    const words = newWords.split(",").map((word) => word.trim());
-    setBlacklist([...blacklist, ...words]);
-    setNewWords("");
+  useEffect(() => {
+    handleLoadBlacklist();
+    handleLoadRegexList();
+    handleLoadDetectSecrets();
+    handleLoadWordLimit();
+  }, []);
+
+  const handleLoadBlacklist = async () => {
+    try {
+      const data = await getPoliciesByType("blacklist");
+      const items = Array.isArray(data)
+        ? data.map((item) => ({
+            id: item._id,
+            value: item.value,
+            type: item.type,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }))
+        : [];
+      setBlacklist(items);
+    } catch (err) {
+      console.error("Failed to load blacklist:", err);
+    }
   };
 
-  const handleRegexChange = () => {
+  const handleLoadRegexList = async () => {
+    try {
+      const data = await getPoliciesByType("regex");
+      const items = Array.isArray(data)
+        ? data.map((item) => ({
+            id: item._id,
+            value: item.value,
+            type: item.type,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at,
+          }))
+        : [];
+      setRegexList(items);
+    } catch (err) {
+      console.error("Failed to load regex:", err);
+    }
+  };
+
+  const handleLoadDetectSecrets = async () => {
+    try {
+      const data = await getPoliciesByType("detect_secrets");
+      const item = data[0].value;
+      setDetectSecrets(item);
+    } catch (err) {
+      console.error("Failed to load detect secrets:", err);
+    }
+  };
+
+  const handleLoadWordLimit = async () => {
+    try {
+      const data = await getPoliciesByType("length_limit");
+      const item = data[0].value;
+      setWordLimit(item);
+    } catch (err) {
+      console.error("Failed to load word limit:", err);
+    }
+  };
+
+  const handleBlacklistChange = async () => {
+    const words = newWords
+      .split("\n")
+      .map((word) => word.trim())
+      .filter((word) => word);
+
+    try {
+      await Promise.all(
+        words.map((word) => createPolicy({ type: "blacklist", value: word }))
+      );
+      handleLoadBlacklist();
+      setNewWords("");
+    } catch (error) {
+      console.error("Error while updating blacklist:", error.message || error);
+    }
+  };
+
+  const handleRegexChange = async () => {
     const regexLines = newRegex
       .split("\n")
       .map((regex) => regex.trim())
       .filter(Boolean);
-    setRegexList([...regexList, ...regexLines]);
-    setNewRegex("");
-  };
 
-  const handleEditRegex = (id) => {
-    const regexToEdit = regexList[id - 1];
-    setEditingRegex({ id, value: regexToEdit });
-  };
-
-  const handleEditBlacklist = (id) => {
-    const blacklistToEdit = blacklist[id - 1];
-    setEditingBlacklist({ id, value: blacklistToEdit });
-  };
-
-  const handleSaveEditRegex = () => {
-    if (editingRegex) {
-      const updatedRegexList = regexList.map((regex, index) =>
-        index === editingRegex.id - 1 ? editingRegex.value : regex
+    try {
+      await Promise.all(
+        regexLines.map((regex) => createPolicy({ type: "regex", value: regex }))
       );
-      setRegexList(updatedRegexList);
+      handleLoadRegexList();
+      setNewRegex("");
+    } catch (error) {
+      console.error("Error while updating regex:", error.message || error);
+    }
+  };
+
+  const handleEditRegex = (index) => {
+    const regexToEdit = regexList[index - 1];
+    setEditingRegex({ index, value: regexToEdit.value, id: regexToEdit.id });
+  };
+
+  const handleEditBlacklist = (index) => {
+    const blacklistToEdit = blacklist[index - 1];
+    setEditingBlacklist({
+      index,
+      value: blacklistToEdit.value,
+      id: blacklistToEdit.id,
+    });
+  };
+
+  const handleSaveEditRegex = async () => {
+    if (editingRegex) {
+      try {
+        await updatePolicy(editingRegex.id, {
+          type: "regex",
+          value: editingRegex.value,
+        });
+      } catch (error) {
+        console.error("Error while updating regex:", error.message || error);
+      }
+      handleLoadRegexList();
       setEditingRegex(null);
     }
   };
 
-  const handleSaveEditBlacklist = () => {
+  const handleSaveEditBlacklist = async () => {
     if (editingBlacklist) {
-      const updatedBlacklistList = blacklist.map((blacklist, index) =>
-        index === editingBlacklist.id - 1 ? editingBlacklist.value : blacklist
-      );
-      setBlacklist(updatedBlacklistList);
+      try {
+        await updatePolicy(editingBlacklist.id, {
+          value: editingBlacklist.value,
+          type: "blacklist",
+        });
+      } catch (error) {
+        console.error("Error while updating regex:", error.message || error);
+      }
+      handleLoadBlacklist();
       setEditingBlacklist(null);
     }
   };
 
-  const handleSaveToggleAndLimit = () => {
-    console.log("Detect Secrets:", detectSecrets);
-    console.log("Word Limit:", wordLimit);
+  const handleSaveToggleAndLimit = async () => {
+    try {
+      await createPolicy({
+        type: "detect_secrets",
+        value: Boolean(detectSecrets),
+      });
+      await createPolicy({
+        type: "length_limit",
+        value: parseInt(wordLimit, 10),
+      });
+    } catch (error) {
+      console.error(
+        "Error while updating detect secrets:",
+        error.message || error
+      );
+    }
+  };
+
+  const handleDeleteBlacklist = async (id) => {
+    try {
+      await deletePolicy(id);
+      handleLoadBlacklist();
+    } catch (error) {
+      console.error("Error while deleting blacklist:", error.message || error);
+    }
+  };
+
+  const handleDeleteRegex = async (id) => {
+    try {
+      await deletePolicy(id);
+      handleLoadRegexList();
+    } catch (error) {
+      console.error("Error while deleting regex:", error.message || error);
+    }
   };
 
   const blacklistColumns = [
-    { field: "id", headerName: "Index", width: 100 },
-    { field: "word", headerName: "Word", flex: 1 },
+    { field: "index", headerName: "STT", width: 100 },
+    { field: "value", headerName: "Từ blacklist", flex: 1 },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "Hành động",
       width: 150,
       renderCell: (params) => (
         <Box>
           <IconButton
             color="primary"
-            onClick={() => handleEditBlacklist(params.row.id)}
+            onClick={() => handleEditBlacklist(params.row.index)}
           >
             <EditIcon />
           </IconButton>
           <IconButton
             color="error"
-            onClick={() =>
-              setBlacklist(blacklist.filter((_, i) => i !== params.row.id - 1))
-            }
+            onClick={() => handleDeleteBlacklist(params.row.id)}
           >
             <DeleteIcon />
           </IconButton>
@@ -116,31 +234,33 @@ const HomePage = () => {
     },
   ];
 
-  const blacklistRows = blacklist.map((word, index) => ({
-    id: index + 1,
-    word,
+  const blacklistRows = blacklist.map((item, index) => ({
+    id: item.id,
+    index: index + 1,
+    value: item.value,
+    type: item.type,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   }));
 
   const regexColumns = [
-    { field: "id", headerName: "Index", width: 100 },
-    { field: "regex", headerName: "Regex Pattern", flex: 1 },
+    { field: "index", headerName: "STT", width: 100 },
+    { field: "value", headerName: "Regex Pattern", flex: 1 },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "Hành động",
       width: 150,
       renderCell: (params) => (
         <Box>
           <IconButton
             color="primary"
-            onClick={() => handleEditRegex(params.row.id)}
+            onClick={() => handleEditRegex(params.row.index)}
           >
             <EditIcon />
           </IconButton>
           <IconButton
             color="error"
-            onClick={() =>
-              setRegexList(regexList.filter((_, i) => i !== params.row.id - 1))
-            }
+            onClick={() => handleDeleteRegex(params.row.id)}
           >
             <DeleteIcon />
           </IconButton>
@@ -149,7 +269,14 @@ const HomePage = () => {
     },
   ];
 
-  const regexRows = regexList.map((regex, index) => ({ id: index + 1, regex }));
+  const regexRows = regexList.map((regex, index) => ({
+    id: regex.id,
+    index: index + 1,
+    value: regex.value,
+    type: regex.type,
+    createdAt: regex.createdAt,
+    updatedAt: regex.updatedAt,
+  }));
 
   return (
     <Box
@@ -164,12 +291,12 @@ const HomePage = () => {
       }}
     >
       <Typography variant="h4" color="primary" gutterBottom>
-        Configure Policies
+        Cấu hình Policy ChatGPT
       </Typography>
 
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
-          Toggle and Word Limit
+          Cấu hình chung
         </Typography>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={6}>
@@ -180,14 +307,14 @@ const HomePage = () => {
                   onChange={(e) => setDetectSecrets(e.target.checked)}
                 />
               }
-              label="Detect Secrets"
+              label="Phát hiện Secrets"
             />
           </Grid>
           <Grid item xs={6}>
             <TextField
               fullWidth
               variant="outlined"
-              label="Word Limit"
+              label="Giới hạn từ ngữ"
               type="number"
               value={wordLimit}
               onChange={(e) => setWordLimit(e.target.value)}
@@ -200,14 +327,14 @@ const HomePage = () => {
             color="secondary"
             onClick={handleSaveToggleAndLimit}
           >
-            Save Settings
+            Lưu cấu hình
           </Button>
         </Box>
       </Paper>
 
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
-          Blacklisted Words
+          Cấu hình từ blacklist
         </Typography>
         {editingBlacklist && (
           <Box sx={{ mb: 2 }}>
@@ -229,7 +356,7 @@ const HomePage = () => {
               color="secondary"
               onClick={handleSaveEditBlacklist}
             >
-              Save Edit
+              Lưu thay đổi
             </Button>
           </Box>
         )}
@@ -240,7 +367,7 @@ const HomePage = () => {
               variant="outlined"
               value={newWords}
               onChange={(e) => setNewWords(e.target.value)}
-              placeholder="Enter words to blacklist (comma separated)"
+              placeholder="Nhập từ blacklist (mỗi từ trên một dòng)"
               multiline
               rows={2}
               sx={{ mb: 2 }}
@@ -250,13 +377,10 @@ const HomePage = () => {
               color="secondary"
               onClick={handleBlacklistChange}
             >
-              Save Changes
+              Lưu thay đổi
             </Button>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="subtitle1">
-              Current Blacklist ({blacklist.length} words):
-            </Typography>
             <Box sx={{ height: 400, mt: 2 }}>
               <DataGrid
                 rows={blacklistRows}
@@ -265,6 +389,15 @@ const HomePage = () => {
                 rowsPerPageOptions={[5]}
                 disableSelectionOnClick
                 components={{ Toolbar: GridToolbar }}
+                disableColumnFilter
+                disableColumnSelector
+                disableDensitySelector
+                slots={{ toolbar: GridToolbar }}
+                slotProps={{
+                  toolbar: {
+                    showQuickFilter: true,
+                  },
+                }}
               />
             </Box>
           </Grid>
@@ -273,7 +406,7 @@ const HomePage = () => {
 
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
-          Regex Patterns
+          Cấu hình regex blacklist
         </Typography>
         {editingRegex && (
           <Box sx={{ mb: 2 }}>
@@ -284,7 +417,7 @@ const HomePage = () => {
               onChange={(e) =>
                 setEditingRegex({ ...editingRegex, value: e.target.value })
               }
-              placeholder="Edit regex pattern"
+              placeholder="Nhập regex pattern"
               sx={{ mb: 1 }}
             />
             <Button
@@ -292,7 +425,7 @@ const HomePage = () => {
               color="secondary"
               onClick={handleSaveEditRegex}
             >
-              Save Edit
+              Lưu thay đổi
             </Button>
           </Box>
         )}
@@ -303,7 +436,7 @@ const HomePage = () => {
               variant="outlined"
               value={newRegex}
               onChange={(e) => setNewRegex(e.target.value)}
-              placeholder="Enter regex patterns (one per line)"
+              placeholder="Nhập regex pattern (mỗi pattern trên một dòng)"
               multiline
               rows={4}
               sx={{ mb: 2 }}
@@ -313,13 +446,10 @@ const HomePage = () => {
               color="secondary"
               onClick={handleRegexChange}
             >
-              Save Changes
+              Lưu thay đổi
             </Button>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="subtitle1">
-              Current Regex Filters ({regexList.length} patterns):
-            </Typography>
             <Box sx={{ height: 400, mt: 2 }}>
               <DataGrid
                 rows={regexRows}
@@ -327,7 +457,15 @@ const HomePage = () => {
                 pageSize={5}
                 rowsPerPageOptions={[5]}
                 disableSelectionOnClick
-                components={{ Toolbar: GridToolbar }}
+                disableColumnFilter
+                disableColumnSelector
+                disableDensitySelector
+                slots={{ toolbar: GridToolbar }}
+                slotProps={{
+                  toolbar: {
+                    showQuickFilter: true,
+                  },
+                }}
               />
             </Box>
           </Grid>

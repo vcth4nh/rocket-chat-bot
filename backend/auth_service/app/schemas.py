@@ -18,10 +18,9 @@ class ObjectIdField(fields.Field):
 
 # Schema cho User
 class UserSchema(Schema):
-    id = ObjectIdField(data_key="_id", dump_only=True)
     username = fields.Str(required=True, validate=lambda x: 3 <= len(x) <= 30)
-    email = fields.Email(required=True)
-    hashed_password = fields.Str(required=True)
+    email = fields.Email(required=False)
+    password = fields.Str(required=True)
     is_active = fields.Bool(default=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
@@ -55,3 +54,31 @@ class PolicyRuleSchema(Schema):
         if self.context.get("type") == "detect_secrets" and not isinstance(value, bool):
             raise ValidationError("Value must be a boolean for type 'detect_secrets'")
         
+
+from pydantic import BaseModel, Field, EmailStr, validator
+from bson import ObjectId
+from datetime import datetime
+from typing import Optional
+
+# Custom ObjectId Type for Pydantic
+class PydanticObjectId(str):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid ObjectId")
+        return str(v)
+
+class UserBaseModel(BaseModel):
+    username: str
+    email: Optional[EmailStr]
+    is_active: bool = True
+
+class UserCreateModel(BaseModel):
+    username: str
+    password: str
+    is_active: bool = True
+
