@@ -3,7 +3,7 @@ import os
 from rocketchat_async import RocketChat
 from rocketchat_async.constants import *
 from rocketchat_async.response_dataclass import ReceivedMessage
-from AIClient import AIClient
+from ai_client import AIClient
 from logs_util import ElasticsearchUtils
 from policy import PolicyController, PolicyException
 

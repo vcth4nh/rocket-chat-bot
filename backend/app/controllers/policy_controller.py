@@ -2,7 +2,6 @@ from pymongo.collection import Collection
 from bson import ObjectId
 from datetime import datetime
 from fastapi import HTTPException
-from app.schemas import PolicyRuleSchema
 from app.models import PolicyCreateModel, PolicyUpdateModel
 
 
@@ -35,13 +34,6 @@ class PolicyController:
             p["_id"] = str(p["_id"])
             res.append(p)
         return res
-
-    @staticmethod
-    def get_policy_rule_by_id(policy_id: str, policy_collection: Collection):
-        policy = policy_collection.find_one({"_id": ObjectId(policy_id)})
-        if not policy:
-            raise HTTPException(status_code=404, detail="Policy rule not found")
-        return PolicyRuleSchema().dump(policy)
 
     @staticmethod
     def get_all_policy_rules(policy_collection: Collection):

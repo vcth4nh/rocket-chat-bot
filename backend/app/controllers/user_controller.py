@@ -2,7 +2,6 @@ from datetime import datetime
 from pymongo.collection import Collection
 from bson import ObjectId
 from fastapi import HTTPException
-from app.schemas import UserSchema
 from app.models import UserCreateModel, UserGetModel
 import hashlib
 from app.utils import hash_password_sha256

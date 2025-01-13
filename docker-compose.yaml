@@ -1,26 +1,16 @@
 version: "3.9"
 services:
-  auth_service:
-    build: ./backend/auth_service
+  backend:
+    build: ./backend
     ports:
-      - "8001:8000"
+      - "8000:8000"
     volumes:
-      - ./backend/auth_service:/app
-    environment:
-      - DATABASE_URL=postgresql://user:password@db/auth_service_db
+      - ./backend:/app
   frontend:
     build: ./frontend
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
-  db:
-    image: postgres:14
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: auth_service_db
-    volumes:
-      - db_data:/var/lib/postgresql/data
 volumes:
   db_data:
