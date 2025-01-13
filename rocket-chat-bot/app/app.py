@@ -5,9 +5,7 @@ from rocketchat_async.constants import *
 from rocketchat_async.response_dataclass import ReceivedMessage
 from AIClient import AIClient
 from logs_util import ElasticsearchUtils
-import json
-from pprint import pprint
-from policy import PolicyController
+from policy import PolicyController, PolicyException
 
 # TODO: remove this
 from dotenv import load_dotenv
@@ -57,14 +55,15 @@ class Bot:
 
     async def handle_message(self, channel_id, sender_id, sender_uname, msg_id, msg):
         if sender_id != self.rc.user_id:
+            # TODO: log if message is violating policy or not
             self.elasticsearch.log_message(msg, sender_uname, msg_id)
 
-            if not self.policy_controller.run(msg):
-                # TODO: reply bi vi pham o dau
-                await self.rc.send_message("Message not allowed", channel_id)
-                return
+            try:
+                self.policy_controller.run(msg)
+                await self.ai_chat_stream(msg, channel_id)
+            except PolicyException as e:
+                await self.rc.send_message(str(e), channel_id)
             
-            await self.ai_chat_stream(msg, channel_id)
 
     def subscribe_callback_dm(self, msg: ReceivedMessage):
         asyncio.create_task(self.handle_message(msg.rid, msg.u._id, msg.u.username, msg._id, msg.msg))
@@ -115,7 +114,7 @@ async def main():
 
     while True:
         try:
-            rc = RocketChat(verbose=True)
+            rc = RocketChat(verbose=False)
             print(f'Connecting to {address}...')
             await rc.start(address, username, password)
             bot = Bot(rc, ai_client, stream_speed, es_utils, policy_controller)

@@ -54,12 +54,12 @@ class PolicyRepository(Repository):
     def __init__(self, db_uri: str):
         super().__init__(db_uri, db_name="chatbot_db", collection_name="policy_rules")
 
-    def get_length_limit(self) -> Dict[str, Any]:
+    def get_length_limit(self) -> int | None:
         query = {"type": "length_limit"}
         res = self.find_one(query)
         return int(res.get("value")) if res else None
     
-    def get_detect_secrets(self) -> Dict[str, Any]:
+    def get_detect_secrets(self) -> bool | None:
         query = {"type": "detect_secrets"}
         res = self.find_one(query)
         return bool(res.get("value")) if res else None
@@ -76,7 +76,7 @@ class PolicyRepository(Repository):
         regex_patterns = [item.get("value") for item in res]
         return regex_patterns
 
-    def find_by_policy_type(self, policy_type: str) -> Dict[str, Any]:
+    def find_by_policy_type(self, policy_type: str) -> list[dict[str, Any]]:
         query = {"type": policy_type}
         print(self.find_one(query))
         return self.find_many(query)

@@ -1,3 +1,6 @@
 [submodule "rocket-chat-bot/rocketchat-async"]
 	path = rocket-chat-bot/rocketchat-async
 	url = git@github.com:vcth4nh/rocketchat-async.git
+[submodule "rocket-chat-bot/detect-secrets"]
+	path = rocket-chat-bot/detect-secrets
+	url = https://github.com/Yelp/detect-secrets.git
