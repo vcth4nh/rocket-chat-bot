@@ -2,76 +2,73 @@ from datetime import datetime
 from pymongo.collection import Collection
 from bson import ObjectId
 from fastapi import HTTPException
+from app.schemas import UserSchema
+from app.models import UserCreateModel, UserGetModel
+import hashlib
+from app.utils import hash_password_sha256
 
 
 class UserController:
+
     @staticmethod
-    def create_user(data: dict, users_collection: Collection):
-        if users_collection.find_one({"email": data["email"]}):
+    def create_user(data: UserCreateModel, users_collection: Collection):
+
+        if users_collection.find_one({"email": data.username}):
             raise HTTPException(status_code=400, detail="Email already registered")
-        
-        if users_collection.find_one({"username": data["username"]}):
+        if users_collection.find_one({"username": data.username}):
             raise HTTPException(status_code=400, detail="Username already registered")
+        
+        hashed_password = hash_password_sha256(data.password)
+        validated_data_dict = data.model_dump()
+        validated_data_dict["password"] = hashed_password
+        validated_data_dict["created_at"] = validated_data_dict.get("created_at") or datetime.utcnow()
+        validated_data_dict["updated_at"] = validated_data_dict.get("updated_at") or datetime.utcnow()
 
-        data["created_at"] = datetime.utcnow()
-        data["updated_at"] = datetime.utcnow()
-
-        result = users_collection.insert_one(data)
-        data["_id"] = result.inserted_id
-        return data
+        inserted_id = users_collection.insert_one(validated_data_dict).inserted_id
+        return {"id": str(inserted_id)}
 
     @staticmethod
     def get_user_by_id(user_id: str, users_collection: Collection):
         user = users_collection.find_one({"_id": ObjectId(user_id)})
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        user["_id"] = str(user["_id"])
         return user
 
     @staticmethod
-    def get_all_users(users_collection: Collection):
-        users = list(users_collection.find())
-        return users
+    def update_user(user_id: str, data: dict, users_collection: Collection):
+        try:
+            validated_data = UserCreateModel.model_validate(data)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
 
-    @staticmethod
-    def update_user(user_id: str, update_data: dict, users_collection: Collection):
-        update_data["updated_at"] = datetime.utcnow()
+        updated_data = validated_data.model_dump(exclude_unset=True)
+        updated_data["updated_at"] = datetime.utcnow()
+
         result = users_collection.update_one(
-            {"_id": ObjectId(user_id)}, {"$set": update_data}
+            {"_id": ObjectId(user_id)},
+            {"$set": updated_data}
         )
+
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="User not found")
-        return users_collection.find_one({"_id": ObjectId(user_id)})
+
+        return {"message": "User updated successfully"}
 
     @staticmethod
     def delete_user(user_id: str, users_collection: Collection):
         result = users_collection.delete_one({"_id": ObjectId(user_id)})
+
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="User not found")
+
         return {"message": "User deleted successfully"}
     
     @staticmethod
-    def search_user_by_username(username: str, users_collection: Collection):
-        users = list(users_collection.find({"username": {"$regex": username, "$options": "i"}}))
-        if not users:
-            raise HTTPException(status_code=404, detail="No users found")
-        return users
-
-    @staticmethod
-    def deactivate_user(user_id: str, users_collection: Collection):
-        result = users_collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {"is_active": False, "updated_at": datetime.utcnow()}}
-        )
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="User not found")
-        return {"message": "User deactivated successfully"}
-
-    @staticmethod
-    def activate_user(user_id: str, users_collection: Collection):
-        result = users_collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {"is_active": True, "updated_at": datetime.utcnow()}}
-        )
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="User not found")
-        return {"message": "User activated successfully"}
+    def get_all_users(users_collection: Collection):
+        users = users_collection.find()
+        res = []
+        for user in users:
+            user["_id"] = str(user["_id"])
+            res.append(user)
+        return res

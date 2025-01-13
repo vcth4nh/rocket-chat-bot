@@ -1,11 +1,12 @@
 from fastapi import APIRouter
-from app.database import db
+from app.database.database import db
 from app.controllers.policy_controller import PolicyController
+from app.models import PolicyCreateModel, PolicyUpdateModel
 
 router = APIRouter()
 
 @router.post("/policies")
-def create_policy_rule(policy: dict):
+def create_policy_rule(policy: PolicyCreateModel):
     """
     Tạo một policy rule mới.
     """
@@ -33,7 +34,7 @@ def get_policy_rule(policy_id: str):
 
 
 @router.put("/policies/{policy_id}")
-def update_policy_rule(policy_id: str, update_data: dict):
+def update_policy_rule(policy_id: str, update_data: PolicyUpdateModel):
     """
     Cập nhật thông tin policy rule.
     """
@@ -50,3 +51,12 @@ def delete_policy_rule(policy_id: str):
     policy_collection = db["policy_rules"]
     result = PolicyController.delete_policy_rule(policy_id, policy_collection)
     return result
+
+@router.get("/policies_by_type/{policy_type}")
+def get_policy_rule_by_type(policy_type: str):
+    """
+    Lấy danh sách policy rules theo type.
+    """
+    policy_collection = db["policy_rules"]
+    result = PolicyController.get_policy_rule_by_type(policy_type, policy_collection)
+    return {"data": result}

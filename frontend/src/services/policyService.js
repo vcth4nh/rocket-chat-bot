@@ -1,12 +1,15 @@
-import api from './api';
+import api from "./api";
 
 // Get all policy rules
 export const getAllPolicies = async () => {
   try {
-    const response = await api.get('/policy/policies');
+    const response = await api.get("/policy/policies");
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch policies:', error.response?.data || error.message);
+    console.error(
+      "Failed to fetch policies:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
@@ -14,10 +17,13 @@ export const getAllPolicies = async () => {
 // Create a new policy rule
 export const createPolicy = async (policyData) => {
   try {
-    const response = await api.post('/policy/policies', policyData);
+    const response = await api.post("/policy/policies", policyData);
     return response.data;
   } catch (error) {
-    console.error('Failed to create policy:', error.response?.data || error.message);
+    console.error(
+      "Failed to create policy:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
@@ -28,7 +34,10 @@ export const getPolicyById = async (policyId) => {
     const response = await api.get(`/policy/policies/${policyId}`);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch policy by ID:', error.response?.data || error.message);
+    console.error(
+      "Failed to fetch policy by ID:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
@@ -39,7 +48,10 @@ export const updatePolicy = async (policyId, updateData) => {
     const response = await api.put(`/policy/policies/${policyId}`, updateData);
     return response.data;
   } catch (error) {
-    console.error('Failed to update policy:', error.response?.data || error.message);
+    console.error(
+      "Failed to update policy:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
@@ -50,7 +62,24 @@ export const deletePolicy = async (policyId) => {
     const response = await api.delete(`/policy/policies/${policyId}`);
     return response.data;
   } catch (error) {
-    console.error('Failed to delete policy:', error.response?.data || error.message);
+    console.error(
+      "Failed to delete policy:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// Get policy by types
+export const getPoliciesByType = async (policyType) => {
+  try {
+    const response = await api.get(`/policy/policies_by_type/${policyType}`);
+    return response.data.data;
+  } catch (error) {
+    console.error(
+      "Failed to fetch policies by type:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
