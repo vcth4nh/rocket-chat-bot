@@ -1,6 +1,6 @@
 import api from "./api"; // Ensure this path matches your API instance
 
-export const login = async (username, password) => {
+export const authen = async (username, password) => {
   try {
     const response = await api.post("/auth/login", {
       username,

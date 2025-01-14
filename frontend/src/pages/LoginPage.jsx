@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css"; // Adding a custom CSS file for styling
-import { login } from "../services/authService"; // Import the login function from the API file
+import { authen } from "../services/authService"; // Import the authen function from the API file
 import { Box, Typography, TextField, Button, Paper } from "@mui/material";
+import { AuthContext } from "../App";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { login } = React.useContext(AuthContext);
 
   const navigate = useNavigate();
 
@@ -25,9 +27,10 @@ const LoginPage = () => {
     setError("");
 
     try {
-      const data = await login(username, password);
+      const data = await authen(username, password);
       console.log("Login successful:", data);
       // Handle successful login (e.g., redirect, save token)
+      login(data.data.access_token);
       navigate("/home");
     } catch (err) {
       setError(

@@ -108,3 +108,10 @@ class PolicyGetModel(PolicyBaseModel):
     class Config:
         json_encoders = {ObjectId: lambda obj: str(obj)}
         arbitrary_types_allowed = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: str | None = None

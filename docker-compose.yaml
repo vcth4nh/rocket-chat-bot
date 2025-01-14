@@ -5,6 +5,9 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+    env_file:
+      - mongo.env
+      - ./backend/.env
   frontend:
     build: ./frontend
     ports:
@@ -12,7 +15,7 @@ services:
     volumes:
       - ./frontend:/app
     depends_on:
-        - backend
+      - backend
   bot:
     build: ./rocket-chat-bot
     restart: unless-stopped
@@ -21,5 +24,7 @@ services:
       - ./rocket-chat-bot/app:/app:ro
     env_file:
       - ./rocket-chat-bot/.env
+      - ./mongo.env
+
 volumes:
   db_data:
