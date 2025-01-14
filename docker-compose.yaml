@@ -1,30 +1,10 @@
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
-    environment:
-      - "xpack.security.enabled=false"
-      - "discovery.type=single-node"
-    ports:
-      - "9200:9200"
-  mongodb:
-    image: mongo:7.0.16
-    ports:
-      - "27017:27017"
-    volumes:
-      - db_data:/data/db
-    env_file:
-      - mongo.env
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
-    env_file:
-      - mongo.env
-    depends_on:
-      - mongodb
-      - elasticsearch
   frontend:
     build: ./frontend
     ports:
@@ -41,10 +21,5 @@ services:
       - ./rocket-chat-bot/app:/app:ro
     env_file:
       - ./rocket-chat-bot/.env
-      - ./mongo.env
-    depends_on:
-        - mongodb
-        - elasticsearch
-
 volumes:
   db_data:
