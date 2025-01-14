@@ -22,7 +22,7 @@ class PolicyController:
         if max_length==0:
             return
 
-        if max_length is not None and len(string) > max_length:
+        if max_length is not None and len(string.split()) > max_length:
             raise PolicyException(f"Prompt length exceeds limit: maximum {max_length}, got {len(string)}")
 
     def detect_word(self, string):
