@@ -1,20 +1,13 @@
-# Use official Node.js image
-FROM node:16
+FROM node:22.13.0
 
-# Set working directory
 WORKDIR /app
 
-# Copy project files
 COPY . .
 
-# Install dependencies
-RUN yarn install
+RUN npm install
 
-# Build the project
-RUN yarn build
+RUN npm build
 
-# Expose port
 EXPOSE 3000
 
-# Command to serve the application
-CMD ["yarn", "start"]
+CMD ["npm", "start"]
