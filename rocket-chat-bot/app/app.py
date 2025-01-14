@@ -114,7 +114,7 @@ async def main():
 
     while True:
         try:
-            rc = RocketChat(verbose=False)
+            rc = RocketChat(verbose=True)
             print(f'Connecting to {address}...')
             await rc.start(address, username, password)
             bot = Bot(rc, ai_client, stream_speed, es_utils, policy_controller)
