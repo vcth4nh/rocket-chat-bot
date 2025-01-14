@@ -26,7 +26,7 @@ class Bot:
     
     async def ai_chat_stream(self, msg, channel_id):
         await self.rc.send_typing_event(True, channel_id)       
-        ai_resp = self.ai_client.chat_stream([{"role":"You are GPT 4o dev by OpenAI"},{"role": "user", "content": msg}])
+        ai_resp = self.ai_client.chat_stream([{"role":"system","content":"You are GPT 4o dev by OpenAI"},{"role": "user", "content": msg}])
         await self.rc.send_typing_event(False, channel_id)
 
         first = True
