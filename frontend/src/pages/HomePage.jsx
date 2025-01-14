@@ -20,6 +20,8 @@ import {
   updatePolicy,
   deletePolicy,
 } from "../services/policyService";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const HomePage = () => {
   const [blacklist, setBlacklist] = useState([]);
@@ -106,8 +108,10 @@ const HomePage = () => {
       );
       handleLoadBlacklist();
       setNewWords("");
+      toast.success("Lưu từ blacklist thành công!");
     } catch (error) {
       console.error("Error while updating blacklist:", error.message || error);
+      toast.error("Lỗi khi lưu từ blacklist!");
     }
   };
 
@@ -123,8 +127,10 @@ const HomePage = () => {
       );
       handleLoadRegexList();
       setNewRegex("");
+      toast.success("Lưu regex blacklist thành công!");
     } catch (error) {
       console.error("Error while updating regex:", error.message || error);
+      toast.error("Lỗi khi lưu regex blacklist!");
     }
   };
 
@@ -149,8 +155,10 @@ const HomePage = () => {
           type: "regex",
           value: editingRegex.value,
         });
+        toast.success("Lưu regex blacklist thành công!");
       } catch (error) {
         console.error("Error while updating regex:", error.message || error);
+        toast.error("Lỗi khi lưu regex blacklist!");
       }
       handleLoadRegexList();
       setEditingRegex(null);
@@ -164,8 +172,10 @@ const HomePage = () => {
           value: editingBlacklist.value,
           type: "blacklist",
         });
+        toast.success("Lưu từ blacklist thành công!");
       } catch (error) {
         console.error("Error while updating regex:", error.message || error);
+        toast.error("Lỗi khi lưu từ blacklist!");
       }
       handleLoadBlacklist();
       setEditingBlacklist(null);
@@ -182,11 +192,13 @@ const HomePage = () => {
         type: "length_limit",
         value: parseInt(wordLimit, 10),
       });
+      toast.success("Lưu cấu hình chung thành công!");
     } catch (error) {
       console.error(
         "Error while updating detect secrets:",
         error.message || error
       );
+      toast.error("Lỗi khi lưu cấu hình chung!");
     }
   };
 
@@ -290,6 +302,7 @@ const HomePage = () => {
         gap: 4,
       }}
     >
+      <ToastContainer position="top-right" autoClose={3000} />
       <Typography variant="h4" color="primary" gutterBottom>
         Cấu hình Policy ChatGPT
       </Typography>

@@ -22,6 +22,7 @@ services:
       - ./backend:/app
     env_file:
       - mongo.env
+      - ./backend/.env
     depends_on:
       - mongodb
       - elasticsearch
@@ -32,7 +33,7 @@ services:
     volumes:
       - ./frontend:/app
     depends_on:
-        - backend
+      - backend
   bot:
     build: ./rocket-chat-bot
     restart: unless-stopped
@@ -43,8 +44,8 @@ services:
       - ./rocket-chat-bot/.env
       - ./mongo.env
     depends_on:
-        - mongodb
-        - elasticsearch
+      - mongodb
+      - elasticsearch
 
 volumes:
   db_data:
