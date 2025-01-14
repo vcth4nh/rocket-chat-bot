@@ -20,7 +20,7 @@ class Bot:
         self.policy_controller = policy_controller
 
     async def ai_chat(self, msg, channel_id):
-        await self.rc.send_typing_event(channel_id)       
+        await self.rc.send_typing_event(True, channel_id)
         ai_resp = self.ai_client.chat([{"role": "user", "content": msg}])
         await self.rc.send_message(f"AI response: {ai_resp.choices[0].message.content}", channel_id,)
     

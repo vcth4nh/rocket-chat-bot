@@ -21,9 +21,9 @@ class PolicyController:
 
         if max_length==0:
             return
-
-        if max_length is not None and len(string.split()) > max_length:
-            raise PolicyException(f"Prompt length exceeds limit: maximum {max_length}, got {len(string)}")
+        cur_len=len(string.split())
+        if max_length is not None and cur_len > max_length:
+            raise PolicyException(f"Prompt length exceeds limit: maximum {max_length} words, got {cur_len}")
 
     def detect_word(self, string):
         blacklist_words = self.policy_repo.get_blacklist_words()
